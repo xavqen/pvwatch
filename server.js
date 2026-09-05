@@ -149,7 +149,7 @@ app.get('/api/dashboard/stats', requireAuth, async (req,res) => {
   } catch(e) { console.error(e); res.status(500).json({error:'Could not load dashboard'}); }
 });
 
-app.post('/api/uploads/sign', requireAuth, async (req,res) => {
+app.post('/api/uploads/sign', async (req,res) => {
   try {
     const { kind, filename, mimeType, sizeBytes } = req.body || {};
     const size = Number(sizeBytes);
@@ -167,7 +167,7 @@ app.post('/api/uploads/sign', requireAuth, async (req,res) => {
   } catch(e) { console.error(e); res.status(500).json({error:e.message || 'Could not sign upload'}); }
 });
 
-app.post('/api/videos', requireAuth, async (req,res) => {
+app.post('/api/videos', async (req,res) => {
   try {
     const {id,title,description,original_name,storage_path,thumbnail_path,subtitle_path,mime_type,size_bytes,duration_seconds,width,height} = req.body || {};
     if (!id || !title || !original_name || !storage_path || !mime_type) return res.status(400).json({error:'Missing video metadata'});
