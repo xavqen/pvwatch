@@ -1,1 +1,32 @@
-<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>PVwatch Admin Login</title><link rel="stylesheet" href="/styles.css"></head><body><header class="topbar"><a class="brand" href="/"><span class="logo">▶</span>PVwatch</a></header><main class="auth-shell"><section class="auth-card"><p class="eyebrow">PRIVATE DASHBOARD</p><h1>Admin login</h1><p class="muted">Sign in to upload and manage videos.</p><form id="form"><div class="field"><label>Password</label><input id="password" type="password" autocomplete="current-password" required></div><button class="btn primary" type="submit">Continue</button><div id="err" class="danger" style="font-size:12px"></div></form></section></main><div id="toast" class="toast hidden"></div><script src="/common.js"></script><script>setupTheme();const next=new URLSearchParams(location.search).get('next')||'/dashboard';$('form').onsubmit=async e=>{e.preventDefault();$('err').textContent='';try{await jsonFetch('/api/auth/login',{method:'POST',body:JSON.stringify({password:$('password').value})});location.href=next}catch(err){$('err').textContent=err.message}}</script></body></html>
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>PVwatch Admin Login</title>
+    <link rel="stylesheet" href="/styles.css">
+    <link rel="icon" href="assets/favicon.ico">
+</head>
+
+<body>
+    <header class="topbar"><a class="brand" href="/"><span class="logo">▶</span>PVwatch</a></header>
+    <main class="auth-shell">
+        <section class="auth-card">
+            <p class="eyebrow">PRIVATE DASHBOARD</p>
+            <h1>Admin login</h1>
+            <p class="muted">Sign in to upload and manage videos.</p>
+            <form id="form">
+                <div class="field"><label>Password</label><input id="password" type="password"
+                        autocomplete="current-password" required></div><button class="btn primary"
+                    type="submit">Continue</button>
+                <div id="err" class="danger" style="font-size:12px"></div>
+            </form>
+        </section>
+    </main>
+    <div id="toast" class="toast hidden"></div>
+    <script src="/common.js"></script>
+    <script>setupTheme(); const next = new URLSearchParams(location.search).get('next') || '/dashboard'; $('form').onsubmit = async e => { e.preventDefault(); $('err').textContent = ''; try { await jsonFetch('/api/auth/login', { method: 'POST', body: JSON.stringify({ password: $('password').value }) }); location.href = next } catch (err) { $('err').textContent = err.message } }</script>
+</body>
+
+</html>
