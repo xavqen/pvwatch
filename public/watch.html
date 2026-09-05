@@ -1,6 +1,72 @@
-<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>PVwatch — Watch</title><link rel="stylesheet" href="/styles.css"></head><body><header class="topbar"><a class="brand" href="/"><span class="logo">▶</span>PVwatch</a><nav class="nav"><a href="/library">Library</a><a href="/login">Creator Dashboard</a><button id="themeBtn">☾</button></nav><div class="nav-mobile"><a class="btn small" href="/library">Library</a><button id="themeBtn">☾</button></div></header><main class="shell"><section class="content-grid"><section class="player-card"><div id="playerWrap" class="player-wrap"><video id="video" preload="metadata" playsinline></video><div id="playerError" class="player-error hidden"></div><div id="controls" class="controls hidden"><input id="seek" type="range" min="0" max="1000" step="1" value="0"><div class="controls-row"><button id="play" class="control">▶</button><button id="back" class="control">↺10</button><button id="fwd" class="control">10↻</button><button id="mute" class="control">🔊</button><input id="volume" type="range" min="0" max="1" value="1" step=".01" style="width:80px"><span id="time" class="time">00:00 / 00:00</span><select id="quality"><option value="original">Original</option></select><select id="speed"><option value="0.5">0.5×</option><option value="0.75">0.75×</option><option value="1" selected>1×</option><option value="1.25">1.25×</option><option value="1.5">1.5×</option><option value="2">2×</option></select><button id="pip" class="control">PiP</button><button id="theater" class="control">▣</button><button id="full" class="control">⛶</button></div></div></div><div class="meta"><h1 id="title">Loading…</h1><p id="desc"></p><div class="settings"><label class="sub">Loop <input id="loop" type="checkbox"></label><label class="sub">Autoplay next <input id="autonext" type="checkbox"></label></div><div id="qualityNote" class="quality-note">Quality selector shows available encodes. This MVP stores one original source.</div></div></section><aside class="library-card"><div class="section-head"><div><h2>More videos</h2><div class="sub">Keep watching</div></div></div><div id="more" class="video-list"></div></aside></section></main><div id="toast" class="toast hidden"></div><script src="/common.js"></script><script>
-const id=location.pathname.split('/').pop();let current=null,all=[];const v=$('video');
-async function load(){all=await jsonFetch('/api/videos');current=await jsonFetch('/api/videos/'+id);renderMeta();renderMore();v.src=current.url;if(current.thumbnail_url)v.poster=current.thumbnail_url;if(current.subtitle_url){const tr=document.createElement('track');tr.kind='subtitles';tr.label='Subtitles';tr.srclang='en';tr.src=current.subtitle_url;v.appendChild(tr)}$('controls').classList.remove('hidden');v.load();await jsonFetch('/api/videos/'+id+'/view',{method:'POST',body:'{}'}).catch(()=>{});}
-function renderMeta(){$('title').textContent=current.title;$('desc').textContent=current.description||'';if(current.width&&current.height)$('qualityNote').textContent=`Source: ${current.width}×${current.height}. Multiple quality encodes can be added later with transcoding.`}
-function renderMore(){$('more').innerHTML=all.filter(x=>x.id!==id).slice(0,12).map(x=>`<article class="video-item" onclick="location.href='/watch/${x.id}'"><img class="thumb" src="${x.thumbnail_url||''}" onerror="this.style.display='none'"><div><div class="video-title">${esc(x.title)}</div><div class="video-meta">${fmtTime(x.duration_seconds)} · ${Number(x.view_count||0)} views</div></div></article>`).join('')||'<div class="muted">No other videos.</div>'}
-$('play').onclick=()=>v.paused?v.play():v.pause();$('back').onclick=()=>v.currentTime=Math.max(0,v.currentTime-10);$('fwd').onclick=()=>v.currentTime=Math.min(v.duration||Infinity,v.currentTime+10);$('volume').oninput=()=>{v.volume=Number($('volume').value);v.muted=v.volume===0};$('mute').onclick=()=>v.muted=!v.muted;$('seek').oninput=()=>{if(v.duration)v.currentTime=Number($('seek').value)/1000*v.duration};$('speed').onchange=()=>v.playbackRate=Number($('speed').value);$('loop').onchange=()=>v.loop=$('loop').checked;$('full').onclick=()=>v.requestFullscreen?.();$('pip').onclick=async()=>{try{if(document.pictureInPictureElement)await document.exitPictureInPicture();else await v.requestPictureInPicture()}catch{toast('PiP unavailable')}};$('theater').onclick=()=>document.body.classList.toggle('theater-mode');v.addEventListener('play',()=>{$('play').textContent='❚❚'});v.addEventListener('pause',()=>{$('play').textContent='▶'});v.addEventListener('timeupdate',()=>{if(v.duration)$('seek').value=Math.round(v.currentTime/v.duration*1000);$('time').textContent=`${fmtTime(v.currentTime)} / ${fmtTime(v.duration)}`});v.addEventListener('volumechange',()=>{$('mute').textContent=v.muted||!v.volume?'🔇':'🔊'});v.addEventListener('error',async()=>{try{const fresh=await jsonFetch('/api/videos/'+id);v.src=fresh.url;v.load()}catch{} });document.addEventListener('keydown',e=>{if(['INPUT','SELECT','TEXTAREA'].includes(document.activeElement.tagName))return;if(e.code==='Space'){e.preventDefault();$('play').click()}if(e.key==='ArrowLeft')v.currentTime=Math.max(0,v.currentTime-5);if(e.key==='ArrowRight')v.currentTime=Math.min(v.duration||Infinity,v.currentTime+5);if(e.key.toLowerCase()==='m')$('mute').click();if(e.key.toLowerCase()==='f')$('full').click()});load().catch(e=>{$('playerError').textContent=e.message;$('playerError').classList.remove('hidden')});</script></body></html>
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>PVwatch — Watch</title>
+    <link rel="stylesheet" href="/styles.css">
+    <link rel="icon" type="image/x-icon" href="assets/favicon.ico">
+</head>
+
+<body>
+    <header class="topbar"><a class="brand" href="/"><span class="logo">▶</span>PVwatch</a>
+        <nav class="nav"><a href="/library">Library</a><a href="/login">Creator Dashboard</a><button
+                id="themeBtn">☾</button></nav>
+        <div class="nav-mobile"><a class="btn small" href="/library">Library</a><button id="themeBtn">☾</button></div>
+    </header>
+    <main class="shell">
+        <section class="content-grid">
+            <section class="player-card">
+                <div id="playerWrap" class="player-wrap"><video id="video" preload="metadata" playsinline></video>
+                    <div id="playerError" class="player-error hidden"></div>
+                    <div id="controls" class="controls hidden"><input id="seek" type="range" min="0" max="1000" step="1"
+                            value="0">
+                        <div class="controls-row"><button id="play" class="control">▶</button><button id="back"
+                                class="control">↺10</button><button id="fwd" class="control">10↻</button><button
+                                id="mute" class="control">🔊</button><input id="volume" type="range" min="0" max="1"
+                                value="1" step=".01" style="width:80px"><span id="time" class="time">00:00 /
+                                00:00</span><select id="quality">
+                                <option value="original">Original</option>
+                            </select><select id="speed">
+                                <option value="0.5">0.5×</option>
+                                <option value="0.75">0.75×</option>
+                                <option value="1" selected>1×</option>
+                                <option value="1.25">1.25×</option>
+                                <option value="1.5">1.5×</option>
+                                <option value="2">2×</option>
+                            </select><button id="pip" class="control">PiP</button><button id="theater"
+                                class="control">▣</button><button id="full" class="control">⛶</button></div>
+                    </div>
+                </div>
+                <div class="meta">
+                    <h1 id="title">Loading…</h1>
+                    <p id="desc"></p>
+                    <div class="settings"><label class="sub">Loop <input id="loop" type="checkbox"></label><label
+                            class="sub">Autoplay next <input id="autonext" type="checkbox"></label></div>
+                    <div id="qualityNote" class="quality-note">Quality selector shows available encodes. This MVP stores
+                        one original source.</div>
+                </div>
+            </section>
+            <aside class="library-card">
+                <div class="section-head">
+                    <div>
+                        <h2>More videos</h2>
+                        <div class="sub">Keep watching</div>
+                    </div>
+                </div>
+                <div id="more" class="video-list"></div>
+            </aside>
+        </section>
+    </main>
+    <div id="toast" class="toast hidden"></div>
+    <script src="/common.js"></script>
+    <script>
+        const id = location.pathname.split('/').pop(); let current = null, all = []; const v = $('video');
+        async function load() { all = await jsonFetch('/api/videos'); current = await jsonFetch('/api/videos/' + id); renderMeta(); renderMore(); v.src = current.url; if (current.thumbnail_url) v.poster = current.thumbnail_url; if (current.subtitle_url) { const tr = document.createElement('track'); tr.kind = 'subtitles'; tr.label = 'Subtitles'; tr.srclang = 'en'; tr.src = current.subtitle_url; v.appendChild(tr) } $('controls').classList.remove('hidden'); v.load(); await jsonFetch('/api/videos/' + id + '/view', { method: 'POST', body: '{}' }).catch(() => { }); }
+        function renderMeta() { $('title').textContent = current.title; $('desc').textContent = current.description || ''; if (current.width && current.height) $('qualityNote').textContent = `Source: ${current.width}×${current.height}. Multiple quality encodes can be added later with transcoding.` }
+        function renderMore() { $('more').innerHTML = all.filter(x => x.id !== id).slice(0, 12).map(x => `<article class="video-item" onclick="location.href='/watch/${x.id}'"><img class="thumb" src="${x.thumbnail_url || ''}" onerror="this.style.display='none'"><div><div class="video-title">${esc(x.title)}</div><div class="video-meta">${fmtTime(x.duration_seconds)} · ${Number(x.view_count || 0)} views</div></div></article>`).join('') || '<div class="muted">No other videos.</div>' }
+        $('play').onclick = () => v.paused ? v.play() : v.pause(); $('back').onclick = () => v.currentTime = Math.max(0, v.currentTime - 10); $('fwd').onclick = () => v.currentTime = Math.min(v.duration || Infinity, v.currentTime + 10); $('volume').oninput = () => { v.volume = Number($('volume').value); v.muted = v.volume === 0 }; $('mute').onclick = () => v.muted = !v.muted; $('seek').oninput = () => { if (v.duration) v.currentTime = Number($('seek').value) / 1000 * v.duration }; $('speed').onchange = () => v.playbackRate = Number($('speed').value); $('loop').onchange = () => v.loop = $('loop').checked; $('full').onclick = () => v.requestFullscreen?.(); $('pip').onclick = async () => { try { if (document.pictureInPictureElement) await document.exitPictureInPicture(); else await v.requestPictureInPicture() } catch { toast('PiP unavailable') } }; $('theater').onclick = () => document.body.classList.toggle('theater-mode'); v.addEventListener('play', () => { $('play').textContent = '❚❚' }); v.addEventListener('pause', () => { $('play').textContent = '▶' }); v.addEventListener('timeupdate', () => { if (v.duration) $('seek').value = Math.round(v.currentTime / v.duration * 1000); $('time').textContent = `${fmtTime(v.currentTime)} / ${fmtTime(v.duration)}` }); v.addEventListener('volumechange', () => { $('mute').textContent = v.muted || !v.volume ? '🔇' : '🔊' }); v.addEventListener('error', async () => { try { const fresh = await jsonFetch('/api/videos/' + id); v.src = fresh.url; v.load() } catch { } }); document.addEventListener('keydown', e => { if (['INPUT', 'SELECT', 'TEXTAREA'].includes(document.activeElement.tagName)) return; if (e.code === 'Space') { e.preventDefault(); $('play').click() } if (e.key === 'ArrowLeft') v.currentTime = Math.max(0, v.currentTime - 5); if (e.key === 'ArrowRight') v.currentTime = Math.min(v.duration || Infinity, v.currentTime + 5); if (e.key.toLowerCase() === 'm') $('mute').click(); if (e.key.toLowerCase() === 'f') $('full').click() }); load().catch(e => { $('playerError').textContent = e.message; $('playerError').classList.remove('hidden') });</script>
+</body>
+
+</html>

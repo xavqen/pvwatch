@@ -1,1 +1,43 @@
-<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>PVwatch Dashboard</title><link rel="stylesheet" href="/styles.css"></head><body><header class="topbar"><a class="brand" href="/dashboard"><span class="logo">▶</span>PVwatch</a><nav class="nav"><a href="/dashboard">Dashboard</a><a href="/upload">Upload</a><a href="/library">Public Library</a><button id="themeBtn">☾</button><button id="logoutBtn">Logout</button></nav><div class="nav-mobile"><a class="btn small" href="/upload">Upload</a><button id="logoutBtn">Logout</button></div></header><main class="shell"><section class="hero"><div><p class="eyebrow">CREATOR CONTROL CENTER</p><h1>Dashboard</h1><p class="muted">Manage PVwatch videos and storage.</p></div><a class="btn primary" href="/upload">＋ Upload video</a></section><section class="grid4" id="stats"></section><section class="panel" style="margin-top:18px"><div class="section-head"><div><h2>Latest uploads</h2><div class="sub">Your newest videos</div></div><a class="btn small" href="/upload">New upload</a></div><div id="tableWrap"></div></section></main><div id="toast" class="toast hidden"></div><script src="/common.js"></script><script>async function init(){if(!await requireLogin())return;const [s,vs]=await Promise.all([jsonFetch('/api/dashboard/stats'),jsonFetch('/api/videos')]);$('stats').innerHTML=[[s.totalVideos,'Videos'],[fmtSize(s.totalStorage),'Storage used'],[s.totalViews,'Views'],[s.latest?esc(s.latest.title):'—','Latest upload']].map(x=>`<div class="stat"><div class="k">${x[1]}</div><div class="v">${x[0]}</div></div>`).join('');$('tableWrap').innerHTML=`<table class="table"><thead><tr><th>Preview</th><th>Title</th><th>Size</th><th>Duration</th><th>Views</th><th></th></tr></thead><tbody>${vs.slice(0,20).map(v=>`<tr><td>${v.thumbnail_url?`<img class="thumb-sm" src="${v.thumbnail_url}">`:''}</td><td>${esc(v.title)}</td><td>${fmtSize(v.size_bytes)}</td><td>${fmtTime(v.duration_seconds)}</td><td>${Number(v.view_count||0)}</td><td><div class="row-actions"><a class="btn small" href="/watch/${v.id}">Watch</a><button class="btn small danger" onclick="removeVideo('${v.id}')">Delete</button></div></td></tr>`).join('')||'<tr><td colspan="6" class="muted">No videos.</td></tr>'}</tbody></table>`}async function removeVideo(id){if(!confirm('Delete this video?'))return;try{await jsonFetch('/api/videos/'+id,{method:'DELETE'});toast('Deleted');init()}catch(e){toast(e.message)}}init();</script></body></html>
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>PVwatch Dashboard</title>
+    <link rel="stylesheet" href="/styles.css">
+    <link rel="icon" type="image/x-icon" href="assets/favicon.ico">
+</head>
+
+<body>
+    <header class="topbar"><a class="brand" href="/dashboard"><span class="logo">▶</span>PVwatch</a>
+        <nav class="nav"><a href="/dashboard">Dashboard</a><a href="/upload">Upload</a><a href="/library">Public
+                Library</a><button id="themeBtn">☾</button><button id="logoutBtn">Logout</button></nav>
+        <div class="nav-mobile"><a class="btn small" href="/upload">Upload</a><button id="logoutBtn">Logout</button>
+        </div>
+    </header>
+    <main class="shell">
+        <section class="hero">
+            <div>
+                <p class="eyebrow">CREATOR CONTROL CENTER</p>
+                <h1>Dashboard</h1>
+                <p class="muted">Manage PVwatch videos and storage.</p>
+            </div><a class="btn primary" href="/upload">＋ Upload video</a>
+        </section>
+        <section class="grid4" id="stats"></section>
+        <section class="panel" style="margin-top:18px">
+            <div class="section-head">
+                <div>
+                    <h2>Latest uploads</h2>
+                    <div class="sub">Your newest videos</div>
+                </div><a class="btn small" href="/upload">New upload</a>
+            </div>
+            <div id="tableWrap"></div>
+        </section>
+    </main>
+    <div id="toast" class="toast hidden"></div>
+    <script src="/common.js"></script>
+    <script>async function init() { if (!await requireLogin()) return; const [s, vs] = await Promise.all([jsonFetch('/api/dashboard/stats'), jsonFetch('/api/videos')]); $('stats').innerHTML = [[s.totalVideos, 'Videos'], [fmtSize(s.totalStorage), 'Storage used'], [s.totalViews, 'Views'], [s.latest ? esc(s.latest.title) : '—', 'Latest upload']].map(x => `<div class="stat"><div class="k">${x[1]}</div><div class="v">${x[0]}</div></div>`).join(''); $('tableWrap').innerHTML = `<table class="table"><thead><tr><th>Preview</th><th>Title</th><th>Size</th><th>Duration</th><th>Views</th><th></th></tr></thead><tbody>${vs.slice(0, 20).map(v => `<tr><td>${v.thumbnail_url ? `<img class="thumb-sm" src="${v.thumbnail_url}">` : ''}</td><td>${esc(v.title)}</td><td>${fmtSize(v.size_bytes)}</td><td>${fmtTime(v.duration_seconds)}</td><td>${Number(v.view_count || 0)}</td><td><div class="row-actions"><a class="btn small" href="/watch/${v.id}">Watch</a><button class="btn small danger" onclick="removeVideo('${v.id}')">Delete</button></div></td></tr>`).join('') || '<tr><td colspan="6" class="muted">No videos.</td></tr>'}</tbody></table>` } async function removeVideo(id) { if (!confirm('Delete this video?')) return; try { await jsonFetch('/api/videos/' + id, { method: 'DELETE' }); toast('Deleted'); init() } catch (e) { toast(e.message) } } init();</script>
+</body>
+
+</html>
