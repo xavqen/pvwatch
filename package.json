@@ -1,0 +1,15 @@
+{
+  "name": "pvwatch",
+  "version": "2.0.0",
+  "private": true,
+  "description": "PVwatch — long-video publishing platform with admin dashboard, frame thumbnail picker, cloud storage and responsive player.",
+  "main": "server.js",
+  "scripts": {"start":"node server.js","dev":"node --watch server.js"},
+  "engines": {"node": ">=20"},
+  "dependencies": {
+    "@supabase/supabase-js": "^2.57.0",
+    "dotenv": "^17.2.1",
+    "express": "^5.1.0",
+    "helmet": "^8.1.0"
+  }
+}

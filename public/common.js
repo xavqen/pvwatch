@@ -1,0 +1,16 @@
+function $(id){return document.getElementById(id)}
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]))}
+function fmtSize(n){n=Number(n)||0;const u=['B','KB','MB','GB'];let i=0;while(n>=1024&&i<u.length-1){n/=1024;i++}return `${n.toFixed(i?1:0)} ${u[i]}`}
+function fmtTime(s){s=Number(s);if(!Number.isFinite(s))return '00:00';s=Math.max(0,Math.floor(s));const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),x=s%60;return h?`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(x).padStart(2,'0')}`:`${String(m).padStart(2,'0')}:${String(x).padStart(2,'0')}`}
+function toast(msg){const t=$('toast');if(!t)return;t.textContent=msg;t.classList.remove('hidden');clearTimeout(window.__tt);window.__tt=setTimeout(()=>t.classList.add('hidden'),2800)}
+async function jsonFetch(url,opts={}){const r=await fetch(url,{...opts,headers:{'Content-Type':'application/json',...(opts.headers||{})}});let d={};try{d=await r.json()}catch{}if(!r.ok)throw new Error(d.error||`Request failed (${r.status})`);return d}
+async function authMe(){return jsonFetch('/api/auth/me',{headers:{}})}
+async function requireLogin(){const m=await authMe();if(!m.authenticated){location.href='/login?next='+encodeURIComponent(location.pathname);return false}return true}
+function setupTheme(){const k='pvwatch-theme';if(localStorage.getItem(k)==='light')document.body.classList.add('light');const b=$('themeBtn');if(b)b.onclick=()=>{document.body.classList.toggle('light');localStorage.setItem(k,document.body.classList.contains('light')?'light':'dark')}}
+function setupLogout(){const b=$('logoutBtn');if(b)b.onclick=async()=>{await fetch('/api/auth/logout',{method:'POST'});location.href='/login'}}
+function nav(){setupTheme();setupLogout()}
+async function xhrUpload(url,file,mime,onProgress){return new Promise((resolve,reject)=>{const x=new XMLHttpRequest();x.open('PUT',url);x.setRequestHeader('Content-Type',mime);x.upload.onprogress=e=>{if(e.lengthComputable)onProgress?.(e.loaded/e.total)};x.onload=()=>x.status>=200&&x.status<300?resolve():reject(new Error(`Upload failed (${x.status})`));x.onerror=()=>reject(new Error('Upload connection failed'));x.send(file)})}
+function getDuration(file){return new Promise(res=>{const v=document.createElement('video');const u=URL.createObjectURL(file);v.preload='metadata';v.onloadedmetadata=()=>{res(Number.isFinite(v.duration)?v.duration:null);URL.revokeObjectURL(u)};v.onerror=()=>{res(null);URL.revokeObjectURL(u)};v.src=u})}
+function captureFrame(video,second){return new Promise(resolve=>{const c=document.createElement('canvas');const w=video.videoWidth||640,h=video.videoHeight||360;const scale=Math.min(1280/w,1);c.width=Math.round(w*scale);c.height=Math.round(h*scale);const draw=()=>{const ctx=c.getContext('2d');ctx.drawImage(video,0,0,c.width,c.height);c.toBlob(resolve,'image/jpeg',.84)};const old=video.currentTime;video.currentTime=Math.max(0,Math.min(second||0,video.duration||0));const once=()=>{video.removeEventListener('seeked',once);draw();video.currentTime=old};video.addEventListener('seeked',once);if(Math.abs(video.currentTime-(second||0))<.05)draw()})}
+function makeBlobUrl(blob){return blob?URL.createObjectURL(blob):null}
+nav()
